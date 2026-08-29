@@ -215,6 +215,17 @@ When the agent writes a health monitoring script, it runs against real endpoints
 
 The live agent is deployed and publicly accessible. **No API key required from the judge.**
 
+### 0. Interactive API docs (fastest way to test)
+
+Open either URL in a browser — fully interactive, no curl required:
+
+- **Swagger UI:** https://barco-gemini-agent-96738061556.us-central1.run.app/docs
+- **ReDoc:** https://barco-gemini-agent-96738061556.us-central1.run.app/redoc
+
+The `/docs` page lists all endpoints with example payloads pre-filled. Click **POST /chat → Try it out → Execute** and the agent runs live. The `tools_used` array in the response documents every tool called. `reply` contains the live public URL of the published artifact.
+
+> **Note:** `/chat` takes 30–90 seconds — the agent is doing real work on a live Kubernetes cluster, not returning cached results.
+
 ### 1. Verify the agent is live
 
 ```bash
