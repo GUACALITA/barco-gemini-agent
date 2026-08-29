@@ -162,7 +162,34 @@ Rules:
 
 # ── App ────────────────────────────────────────────────────────────────────────
 
-app = FastAPI(title="BARCO Gemini Agent", version="1.0.0")
+app = FastAPI(
+    title="BARCO Intelligence — Autonomous Agentic System",
+    version="1.0.0",
+    description="""
+## Three-layer autonomous agent powered by Gemini on Google Cloud Run
+
+**Layer 1 — Orchestrator:** Gemini plans and executes full workflows autonomously
+**Layer 2 — Specialists:** 23 live tools across memory, storage, code generation, and infrastructure
+**Layer 3 — QA Agent:** self-validates every published artifact without being asked
+
+### Quick test
+```
+GET  /health   → verify agent is live
+GET  /tools    → list all 23 tools
+POST /chat     → send a natural language task
+```
+
+### Demo prompt
+```json
+{"message": "Audit this infrastructure and publish a live report.", "history": []}
+```
+Response includes a live public URL and the full list of tools called.
+
+**Live system:** [barco-gemini-agent-96738061556.us-central1.run.app](https://barco-gemini-agent-96738061556.us-central1.run.app)
+**GitHub:** [github.com/GUACALITA/barco-gemini-agent](https://github.com/GUACALITA/barco-gemini-agent)
+**Hackathon:** All Things Agentic — Google Cloud | Guacalita S.A.S, Colombia
+""",
+)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 model = genai.GenerativeModel(
@@ -174,8 +201,27 @@ model = genai.GenerativeModel(
 # ── Schemas ────────────────────────────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
-    message: str
+    message: str = "Audit this infrastructure and publish a live report."
     history: list[dict] = []
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "message": "Audit this entire infrastructure and publish a live report.",
+                    "history": []
+                },
+                {
+                    "message": "What have you built for us? Show me everything you remember.",
+                    "history": []
+                },
+                {
+                    "message": "Create a live war room dashboard — design it yourself, publish it, send the URL.",
+                    "history": []
+                }
+            ]
+        }
+    }
 
 class ChatResponse(BaseModel):
     reply: str
@@ -185,8 +231,9 @@ class ChatResponse(BaseModel):
 
 # ── Endpoints ──────────────────────────────────────────────────────────────────
 
-@app.get("/health")
+@app.get("/health", summary="Health check", tags=["System"])
 def health():
+    """Verify the agent is live. Returns model name and total tool count."""
     return {
         "status": "ok",
         "service": "barco-gemini-agent",
@@ -194,8 +241,9 @@ def health():
         "tools": len(ALL_TOOLS),
     }
 
-@app.get("/tools")
+@app.get("/tools", summary="List all 23 tools", tags=["System"])
 def list_tools():
+    """Returns the names of all 23 specialist tools available to the Gemini orchestrator."""
     return {"tools": [fn.__name__ for fn in ALL_TOOLS]}
 
 _SILENT_TOOLS = {"get_trading_health", "get_trading_status", "get_all_signals", "get_signal_for_symbol"}
@@ -240,8 +288,25 @@ async def _execute_tools_parallel(fn_calls) -> tuple[list, list[str], list[dict]
     return parts, tools_used, failed_tools
 
 
-@app.post("/chat", response_model=ChatResponse)
+@app.post("/chat", response_model=ChatResponse,
+          summary="Send a task to the autonomous agent", tags=["Agent"],
+          response_description="Agent reply with live URL, tools used, and any failures")
 async def chat(req: ChatRequest):
+    """
+    Send a natural language task to BARCO Intelligence.
+
+    The agent runs a full autonomous workflow:
+    1. **GATHER** — calls relevant tools in parallel (health, memory, status)
+    2. **ACT** — analyzes, synthesizes, generates content
+    3. **DELIVER** — publishes to MinIO (live public URL)
+    4. **VALIDATE** — QA Agent reads back every artifact automatically
+    5. **SAVE** — stores result in Ancora cross-session memory
+
+    **Takes 30–90 seconds** — real work on a live Kubernetes cluster.
+
+    The `tools_used` array in the response documents every tool called.
+    Open the URL in `reply` — the page was just created in real time.
+    """
     tools_used: list[str] = []
     failed_tools: list[dict] = []
     print(f"[CHAT] Message: {req.message[:120]}", flush=True)
