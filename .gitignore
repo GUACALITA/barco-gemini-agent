@@ -1,0 +1,28 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Video and media
+*.mp4
+*.mov
+*.avi
+frames/
+
+# Internal planning docs (not for judges)
+GUION_MAESTRO.md
+MAESTRO_FINAL_ES.md
+MAESTRO_FINAL_EN.md
+ALLTHINGS_PLAN.md
+AGENTIC_CINEMA.md
+CINEMA_*.md
+DEVPOST_NOTES.md
+VIDEO_*.md
+VIDEO_SCRIPT*.md
+SCRIPT_BILINGUE.md
+TEXTOS_VIDEO.md
+transcription.md

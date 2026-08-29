@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BARCO Intelligence — Architecture</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #f7f8fc;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    padding: 48px 40px 40px;
+    background-image: radial-gradient(circle at 1px 1px, #dde3f0 1px, transparent 0);
+    background-size: 28px 28px;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 52px;
+  }
+  .header h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: #1a1f36;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+  .header h1 span { color: #4285F4; }
+  .header .sub {
+    font-size: 12px;
+    color: #8b95a8;
+    letter-spacing: 0.4px;
+  }
+  .header .badges {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 20px;
+    letter-spacing: 0.2px;
+  }
+  .badge-blue   { background: #e8f0fe; color: #4285F4; }
+  .badge-green  { background: #e6f4ea; color: #34a853; }
+  .badge-gray   { background: #f1f3f4; color: #5f6368; }
+
+  /* ── Flow ── */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 860px;
+    margin: 0 auto;
+    gap: 0;
+  }
+
+  /* ── Cards ── */
+  .card {
+    width: 100%;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 28px 32px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.05);
+    position: relative;
+  }
+  .card-top {
+    border-top: 3px solid #4285F4;
+  }
+  .card-mid {
+    border-top: 3px solid #34a853;
+  }
+  .card-bot {
+    border-top: 3px solid #a678f0;
+  }
+
+  /* ── Card header row ── */
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .card-icon {
+    font-size: 26px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .card-label { flex: 1; }
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1f36;
+    margin-bottom: 1px;
+  }
+  .card-sub {
+    font-size: 11px;
+    color: #9aa0ac;
+  }
+
+  /* LIVE pill */
+  .live {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #e6f4ea;
+    border: 1px solid #c3e6cb;
+    color: #2d7a3c;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 11px;
+    border-radius: 14px;
+    letter-spacing: 0.8px;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    background: #34a853;
+    border-radius: 50%;
+    animation: blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%,100% { opacity:1; }
+    50% { opacity:0.3; }
+  }
+
+  /* ── Dual mode ── */
+  .dual { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .mode {
+    border-radius: 12px;
+    padding: 14px 18px;
+  }
+  .mode-a { background: #e8f0fe; border: 1px solid #c6d9fb; }
+  .mode-b { background: #e6f4ea; border: 1px solid #bfe3c7; }
+  .mode-title {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+  .mode-a .mode-title { color: #3367d6; }
+  .mode-b .mode-title { color: #2d7a3c; }
+  .mode-desc { font-size: 11px; color: #5a6475; line-height: 1.5; }
+  .mode-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .tag {
+    font-size: 9.5px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 8px;
+  }
+  .tag-a { background: rgba(66,133,244,0.12); color: #3367d6; }
+  .tag-b { background: rgba(52,168,83,0.12); color: #2d7a3c; }
+
+  /* ── Connector ── */
+  .conn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 0;
+    gap: 2px;
+  }
+  .conn-line { width: 2px; height: 16px; background: #d8dde8; }
+  .conn-pill {
+    background: #fff;
+    border: 1px solid #d8dde8;
+    border-radius: 12px;
+    padding: 3px 12px;
+    font-size: 10px;
+    color: #9aa0ac;
+    letter-spacing: 0.3px;
+  }
+  .conn-arrow { color: #c0c7d4; font-size: 14px; }
+
+  /* ── Layers inside Cloud Run ── */
+  .layers { display: flex; flex-direction: column; gap: 10px; }
+  .layer {
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .l-orch { background: #e8f0fe; border: 1px solid #c6d9fb; }
+  .l-spec { background: #e6f4ea; border: 1px solid #bfe3c7; }
+  .l-qa   { background: #fef9e7; border: 1px solid #f5e4b3; }
+
+  .layer-num {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .l-orch .layer-num { background: #4285F4; color: #fff; }
+  .l-spec .layer-num { background: #34a853; color: #fff; }
+  .l-qa   .layer-num { background: #fbbc04; color: #fff; }
+
+  .layer-body { flex: 1; }
+  .layer-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .l-orch .layer-title { color: #3367d6; }
+  .l-spec .layer-title { color: #2d7a3c; }
+  .l-qa   .layer-title { color: #9a6400; }
+  .layer-desc { font-size: 11px; color: #5a6475; line-height: 1.5; }
+
+  /* Tool groups row */
+  .tool-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .tgroup {
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(52,168,83,0.25);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #2d7a3c;
+  }
+
+  /* QA steps */
+  .qa-steps {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+  }
+  .qs {
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(251,188,4,0.3);
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 10px;
+    color: #9a6400;
+    font-weight: 500;
+  }
+  .qa-arr { color: #e0c060; font-size: 12px; }
+
+  /* ── VPS chips ── */
+  .vps-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .vchip {
+    background: #f3effe;
+    border: 1px solid #d9c7fa;
+    border-radius: 10px;
+    padding: 7px 14px;
+  }
+  .vchip-name { font-size: 11px; font-weight: 700; color: #7c3aed; margin-bottom: 1px; }
+  .vchip-desc { font-size: 9.5px; color: #9e82c9; }
+  .vchip-gray { background: #f1f3f4; border-color: #e0e3ea; }
+  .vchip-gray .vchip-name { color: #6b7280; }
+  .vchip-gray .vchip-desc { color: #9ca3af; }
+
+  /* ── Stats ── */
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    max-width: 860px;
+    margin: 28px auto 0;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+  .stat {
+    flex: 1;
+    text-align: center;
+    padding: 20px 16px;
+    border-right: 1px solid #f0f1f5;
+  }
+  .stat:last-child { border-right: none; }
+  .stat-n {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1a1f36;
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat:nth-child(1) .stat-n { color: #4285F4; }
+  .stat:nth-child(2) .stat-n { color: #34a853; }
+  .stat:nth-child(3) .stat-n { color: #7c3aed; }
+  .stat:nth-child(4) .stat-n { color: #ea4335; }
+  .stat:nth-child(5) .stat-n { color: #fbbc04; }
+  .stat-l { font-size: 9.5px; color: #9aa0ac; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    margin-top: 22px;
+    font-size: 10px;
+    color: #b0b8c4;
+  }
+  .footer a { color: #9aa0ac; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>BARCO <span>Intelligence</span></h1>
+  <div class="sub">Autonomous Agentic System · Three-layer hierarchy · Zero human in the loop</div>
+  <div class="badges">
+    <span class="badge badge-blue">☁️ Google Cloud Run</span>
+    <span class="badge badge-green">✨ Gemini 1.5 Flash</span>
+    <span class="badge badge-gray">🏆 All Things Agentic Hackathon</span>
+    <span class="badge badge-gray">🇨🇴 Guacalita S.A.S</span>
+  </div>
+</div>
+
+<div class="flow">
+
+  <!-- ── Flutter App ── -->
+  <div class="card card-top">
+    <div class="card-head">
+      <span class="card-icon">📱</span>
+      <div class="card-label">
+        <div class="card-title">AncloFlutter — Mobile &amp; Web App</div>
+        <div class="card-sub">Flutter · Dart · Android + Web</div>
+      </div>
+    </div>
+    <div class="dual">
+      <div class="mode mode-a">
+        <div class="mode-title">🌐 Online — Gemini Mode</div>
+        <div class="mode-desc">Connects to Cloud Run via HTTPS. Full access to all 23 live tools with real-time streaming.</div>
+        <div class="mode-tags">
+          <span class="tag tag-a">Gemini 1.5 Flash</span>
+          <span class="tag tag-a">23 tools</span>
+          <span class="tag tag-a">Streaming</span>
+        </div>
+      </div>
+      <div class="mode mode-b">
+        <div class="mode-title">✈️ Offline — Gemma Mode</div>
+        <div class="mode-desc">Gemma 270M runs on-device via flutter_gemma. Local memory, RAG, knowledge graph. Zero downtime.</div>
+        <div class="mode-tags">
+          <span class="tag tag-b">Gemma 270M on-device</span>
+          <span class="tag tag-b">SQLite · AES-256</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connector -->
+  <div class="conn">
+    <div class="conn-line"></div>
+    <div class="conn-pill">HTTPS · /chat · /health</div>
+    <div class="conn-arrow">↕</div>
+    <div class="conn-line"></div>
+  </div>
+
+  <!-- ── Cloud Run ── -->
+  <div class="card card-mid">
+    <div class="card-head">
+      <span class="card-icon">☁️</span>
+      <div class="card-label">
+        <div class="card-title">Google Cloud Run — barco-gemini-agent</div>
+        <div class="card-sub">Serverless · Auto-scaling · Cloud Logging</div>
+      </div>
+      <div class="live"><span class="live-dot"></span>LIVE</div>
+    </div>
+
+    <div class="layers">
+
+      <div class="layer l-orch">
+        <div class="layer-num">1</div>
+        <div class="layer-body">
+          <div class="layer-title">🧠 Orchestrator — Gemini 1.5 Flash</div>
+          <div class="layer-desc">Receives a plain-language command → plans the full workflow → calls tools in parallel or sequence → up to 12 agentic rounds → delivers the final result. No human coordination.</div>
+        </div>
+      </div>
+
+      <div class="layer l-spec">
+        <div class="layer-num">2</div>
+        <div class="layer-body">
+          <div class="layer-title">⚙️ Specialists — 23 Tools · 6 Groups</div>
+          <div class="layer-desc">Every tool connects to a real live service. The Orchestrator calls them in parallel — like a team working simultaneously, not a queue.</div>
+          <div class="tool-row">
+            <span class="tgroup">📡 Infrastructure (5)</span>
+            <span class="tgroup">🧠 Memory &amp; Search (6)</span>
+            <span class="tgroup">💾 Storage · MinIO (5)</span>
+            <span class="tgroup">🔧 Code · Aider (2)</span>
+            <span class="tgroup">📈 Trading &amp; Signals (5)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="layer l-qa">
+        <div class="layer-num">3</div>
+        <div class="layer-body">
+          <div class="layer-title">🔍 QA Agent — Autonomous Self-Validation</div>
+          <div class="layer-desc">Fires automatically after every publish or code task. Nobody asks for it. If something is wrong, it fixes it silently.</div>
+          <div class="qa-steps">
+            <span class="qs">📄 Published</span>
+            <span class="qa-arr">→</span>
+            <span class="qs">🔍 QA reads back</span>
+            <span class="qa-arr">→</span>
+            <span class="qs">✅ Valid HTML &amp; length</span>
+            <span class="qa-arr">→</span>
+            <span class="qs">🔁 Auto-fix if broken</span>
+            <span class="qa-arr">→</span>
+            <span class="qs">🚀 URL confirmed</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Connector -->
+  <div class="conn">
+    <div class="conn-line"></div>
+    <div class="conn-pill">HTTP · Internal calls · k3s DNS</div>
+    <div class="conn-arrow">↕</div>
+    <div class="conn-line"></div>
+  </div>
+
+  <!-- ── Kubernetes ── -->
+  <div class="card card-bot">
+    <div class="card-head">
+      <span class="card-icon">🖥️</span>
+      <div class="card-label">
+        <div class="card-title">Production VPS — Kubernetes (k3s)</div>
+        <div class="card-sub">26 live pods · Private server · Production</div>
+      </div>
+    </div>
+    <div class="vps-grid">
+      <div class="vchip">
+        <div class="vchip-name">Milvus</div>
+        <div class="vchip-desc">Semantic memory · 1,068 vectors</div>
+      </div>
+      <div class="vchip">
+        <div class="vchip-name">Kafka</div>
+        <div class="vchip-desc">Real-time event bus</div>
+      </div>
+      <div class="vchip">
+        <div class="vchip-name">Redis</div>
+        <div class="vchip-desc">State cache · Sentinel</div>
+      </div>
+      <div class="vchip">
+        <div class="vchip-name">MinIO</div>
+        <div class="vchip-desc">Object &amp; webpage storage</div>
+      </div>
+      <div class="vchip">
+        <div class="vchip-name">Ancora :31437</div>
+        <div class="vchip-desc">Persistent agent memory</div>
+      </div>
+      <div class="vchip">
+        <div class="vchip-name">Aider :30808</div>
+        <div class="vchip-desc">Live code generation</div>
+      </div>
+      <div class="vchip">
+        <div class="vchip-name">Bridge :31900</div>
+        <div class="vchip-desc">Mobile push notifications</div>
+      </div>
+      <div class="vchip">
+        <div class="vchip-name">VecFrachZ :30818</div>
+        <div class="vchip-desc">Signal classifier</div>
+      </div>
+      <div class="vchip vchip-gray">
+        <div class="vchip-name">etcd · N8N · Gitea</div>
+        <div class="vchip-desc">Config · Automation · Repos</div>
+      </div>
+      <div class="vchip vchip-gray">
+        <div class="vchip-name">PostgreSQL · MySQL · Redis Sentinel</div>
+        <div class="vchip-desc">Persistent databases</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-n">23</div>
+    <div class="stat-l">Live Tools</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n">26</div>
+    <div class="stat-l">k3s Pods</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n">1,068</div>
+    <div class="stat-l">Memory Vectors</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n">3</div>
+    <div class="stat-l">Autonomous Layers</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n">0</div>
+    <div class="stat-l">Human in the Loop</div>
+  </div>
+</div>
+
+<div class="footer" style="margin-top:18px;">
+  Guacalita S.A.S · Colombia 🇨🇴 &nbsp;·&nbsp;
+  <a href="https://barco-gemini-agent-96738061556.us-central1.run.app/health">barco-gemini-agent-96738061556.us-central1.run.app</a>
+</div>
+
+</body>
+</html>
