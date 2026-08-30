@@ -447,6 +447,43 @@ Two Google AI models. One user message. The system never goes dark.
 
 ---
 
+## Gemma On-Device Integration (AncloFlutter)
+
+The Flutter companion app runs **Gemma 3** locally via `flutter_gemma` — zero network, zero latency, zero downtime when the Cloud Run agent is unreachable.
+
+```dart
+// agent_model.dart — AncloFlutter
+import 'package:flutter_gemma/flutter_gemma.dart';
+
+// Load Gemma 3 1B on-device (Android/iOS) or FunctionGemma 270M (Web/WebGPU)
+_loadedModel = await FlutterGemma.getActiveModel(
+  maxTokens: 1024,
+  preferredBackend: kIsWeb ? PreferredBackend.cpu : null,
+);
+
+// Inference — no internet required
+final session = await _loadedModel!.createSession();
+await session.addQueryChunk(Message.text(text: prompt, isUser: true));
+final response = await session.getResponse();
+```
+
+```dart
+// agent_reasoning.dart — online/offline routing
+// Cloud-first: tries Gemini on Cloud Run (23 live tools)
+final cloudResp = await _bridge!.chat(userMessage); // → barco-gemini-agent
+if (!_isLlmBad(cloudResp)) return cloudResp;        // Gemini answered
+
+// Offline fallback: Gemma runs entirely on-device
+await for (final token in AgentModel.instance.generateStream(prompt)) {
+  yield token; // streaming inference, no cloud dependency
+}
+```
+
+**Models supported:** Gemma 3 270M · Gemma 3 1B · Gemma 3 4B · FunctionGemma 270M (web)  
+**Install:** `flutter_gemma` downloads the `.task` file from HuggingFace on first launch — no bundling required.
+
+---
+
 ## Company
 
 **Guacalita S.A.S** — Colombia
