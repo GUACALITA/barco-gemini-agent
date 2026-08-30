@@ -4,6 +4,7 @@
 **Track:** Taskmaster + Startup Excellence
 **Company:** Guacalita S.A.S, Colombia
 **Live agent:** https://barco-gemini-agent-96738061556.us-central1.run.app
+**Demo video:** https://youtu.be/x5O5jLixT6w
 
 ---
 
